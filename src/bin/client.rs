@@ -15,13 +15,28 @@ async fn main() -> Result<(), tokio_websockets::Error> {
     let mut stdin = BufReader::new(stdin).lines();
 
     loop {
-        match stdin.next_line().await {
-            Ok(Some(line)) => {
-                println!("You sent: {}", line);
-                ws_stream.send(Message::text(line)).await?;
+        tokio::select! {
+            incoming = ws_stream.next() => {
+                match incoming {
+                    Some(Ok(msg)) => {
+                        if let Some(text) = msg.as_text() {
+                            println!("> {}", text);
+                        }
+                    },
+                    Some(Err(err)) => break Err(err),
+                    None => break Ok(()),
+                }
             }
-            Ok(None) => break Ok(()),
-            Err(err) => break Err(err.into()),
+            res = stdin.next_line() => {
+                match res {
+                    Ok(Some(line)) => {
+                        ws_stream.send(Message::text(line)).await?;
+                        println!("Message sent!");
+                    }
+                    Ok(None) => break Ok(()),
+                    Err(err) => break Err(err.into()),
+                }
+            }
         }
     }
 }
