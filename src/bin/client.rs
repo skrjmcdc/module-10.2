@@ -14,7 +14,11 @@ async fn main() -> Result<(), tokio_websockets::Error> {
     let stdin = tokio::io::stdin();
     let mut stdin = BufReader::new(stdin).lines();
 
+    while let Ok(Some(line)) = stdin.next_line().await {
+        println!("You sent: {}", line);
+        let _ = ws_stream.send(Message::text(line)).await;
+        // TODO: Receive messages from other clients
+    }
 
-    // TODO
     Ok(())
 }

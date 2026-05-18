@@ -11,7 +11,11 @@ async fn handle_connection(
     mut ws_stream: WebSocketStream<TcpStream>,
     bcast_tx: Sender<String>,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
-    // TODO
+    // TODO: Broadcast message to all clients
+    while let Some(Ok(msg)) = ws_stream.next().await {
+        println!("{}: {}", addr, msg.as_text().unwrap_or("[ERROR]"));
+    }
+
     Ok(())
 }
 
