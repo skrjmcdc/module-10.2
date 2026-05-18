@@ -11,12 +11,21 @@ async fn handle_connection(
     mut ws_stream: WebSocketStream<TcpStream>,
     bcast_tx: Sender<String>,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
+    // let mut bcast_rx = bcast_tx.subscribe();
     // TODO: Broadcast message to all clients
-    while let Some(Ok(msg)) = ws_stream.next().await {
-        println!("{}: {}", addr, msg.as_text().unwrap_or("[ERROR]"));
+    loop {
+        match ws_stream.next().await {
+            Some(Ok(msg)) =>  {
+                if let Some(text) = msg.as_text() {
+                    println!("{addr}: {text}");
+                } else {
+                    println!("{addr} sent an invalid message.");
+                }
+            }
+            Some(Err(err)) => break Err(err.into()),
+            None => break Ok(()),
+        }
     }
-
-    Ok(())
 }
 
 #[tokio::main]
